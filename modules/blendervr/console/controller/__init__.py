@@ -133,12 +133,26 @@ class Controller():
         """
         Called by the configuration file loader
         """
-        current = self.profile.getValue(['screen', 'set'])
-        if current in screenSets:
-            self.screenSet()
+        self._screenSets = screenSets
+        self.screenSet()
 
+    def getScreenSets(self):
+        return self._screenSets
+            
     def screenSet(self):
-        print('Yop !')
+        current = self.profile.getValue(['virtual environment', 'screen set'])
+        if not current or current not in self._screenSets:
+            return
+
+        configuration = self._configuration.getConfiguration()
+        self._screens.setConfigurations(configuration['screens'])
+        del(configuration['screens'])
+        console = configuration['console']
+        self.controller = console['controller']
+        import pprint
+        pprint.pprint(configuration)
+        return
+
 
     @property
     def profile(self):

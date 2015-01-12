@@ -36,13 +36,15 @@
 import os
 import sys
 import time
-from . import interpreter
 from ...tools import controller
+import importlib
+from ..protocol import composeMessage
+from ..protocol import decomposeMessage
 
 class UI():
-    def __init__(self, port, debug = True):
+    def __init__(self, port, debug = False):
         self._port  = port
-        
+
         from ...tools import logger
         self._logger = logger.getLogger('blenderVR')
 
@@ -51,16 +53,29 @@ class UI():
         if debug:
             # Define connexions until the controller is running ...
             self._logger.setLevel('debug')
-            
+
         from ...tools import controller
         try:
             self._controller = controller.Controller('localhost:' + str(self._port), 'UI')
         except ConnectionRefusedError:
             self.logger.warning('Cannot find the controller on localhost:' + str(self._port))
             sys.exit()
-        self._interpreter = interpreter.Interpreter(self._controller)
-        self._quit        = False
 
+        self._commands = {}
+        for moduleName in ['root', 'set', 'get', 'reload']:
+            try:
+                _class = moduleName[0].upper() + moduleName[1:]
+                module = importlib.import_module('..protocol.' + moduleName, __name__)
+                self._commands[moduleName] = getattr(module, _class)(self._controller)
+            except:
+                self.logger.log_traceback(False)
+                pass
+        
+        self._quit = False
+
+    def getCommands(self):
+        return self._commands
+        
     def start(self):
         from ... import version
         self.logger.info('blenderVR version:', version)
@@ -69,6 +84,7 @@ class UI():
             from . import completer
             self._completer = completer.Completer(self)
         except ImportError:
+            self.logger.log_traceback(False)
             self.logger.info('Readline module not available.')
         else:
             self.logger.debug('Readline module available.')
@@ -81,8 +97,30 @@ class UI():
                 except (EOFError, KeyboardInterrupt):
                     self._quit = True
                 else:
-                    print('Dispatch %s' % line)
-                    self._quit = (line == 'exit')
+                    command = line.split()
+                    if command[0] == 'exit':
+                        self._quit = True
+                        continue
+                    _module = command[0]
+                    if _module in self._commands:
+                        del(command[0])
+                    else:
+                        _module = 'root'
+                    _class  = self._commands[_module]
+                    _method = command[0]
+                    del(command[0])
+                    if hasattr(_class, _method):
+                        if len(command) > 0:
+                            result = getattr(_class, _method)(*command)
+                        else:
+                            result = getattr(_class, _method)()
+                        if _module == 'get':
+                            command, argument = decomposeMessage(result[1])
+                            print(str(command) + ': ' + str(argument))
+                            if _method == 'screenSets' and hasattr(self, '_completer'):
+                                self._completer.setScreenSets(argument)
+                    else:
+                        self.logger.info('Invalid command:', line)
         except controller.closedSocket as e:
             self.logger.warning(e)
         except (KeyboardInterrupt, SystemExit):

@@ -75,20 +75,6 @@ builtins.blenderVR_profilePath = os.path.join(path, 'vr', 'modules')
 if not os.path.isdir(blenderVR_profilePath):
     os.makedirs(blenderVR_profilePath)
 
-def isValidRoot(root):
-    """Check if a given path is valid as blenderVR root.
-
-    This is done by searching a 'modules' subdirectory within that path
-    (this modules which contains the blendervr Python package)
-
-    :param root: path to test
-    :type root: str
-    :return: boolean indicator that path is valid
-    :rtype: bool
-    """
-    if root is None:
-        return False
-    return os.path.isdir(os.path.join(root, 'modules'))
 
 # Prepare command-line arguments parsing, then parse it.
 import argparse
@@ -122,9 +108,29 @@ parser.add_argument("-p", "--port", dest="port",
 environments = parser.parse_args(sys.argv[1:])
 
 
+def checkRoot(path):
+    """Check if a given path is valid as blenderVR root.
+
+    This is done by searching a 'modules' subdirectory within that path
+    (this modules which contains the blendervr Python package)
+
+    :param path: path to test
+    :type path: str
+    :return: boolean indicator that path is valid
+    :rtype: bool
+    """
+    return (path and os.path.isdir(os.path.join(path, 'modules', 'blendervr')))
+
+
 def getRootPath(environment):
+    root = os.path.dirname(os.path.realpath(__file__))
+    if checkRoot(root):
+        return root
     if environment is not None:
-        return environment
+        if checkRoot(environment):
+            return environment
+        print('Invalid blenderVR root path (' + environment + '): it must contain the ' + os.path.join('modules', 'blendervr') + ' folder !')
+        sys.exit()
     try:
         import pickle
         with open(profile_file, 'rb') as node:
@@ -133,19 +139,12 @@ def getRootPath(environment):
             return configuration['root']
     except:
         pass
-    return os.path.dirname(os.path.realpath(__file__))
+    return None
 
 
-root = None
+root = getRootPath(environments.blenderVR_root)
 
-# Is blenderVR_root given on command line ?
-if environments.blenderVR_root is not None:
-    root = environments.blenderVR_root
-
-# Is root available in profile file ?
-if not isValidRoot(root):
-    root = getRootPath(environments.blenderVR_root)
-if isValidRoot(root):
+if checkRoot(root):
     moduleRoot = os.path.join(root, 'modules')
 else:
     print('Cannot find blenderVR root !')
@@ -203,7 +202,10 @@ try:
             process.wait()
             sys.exit()
     if environments.ui and environments.port:
-        process = subprocess.Popen([sys.executable, os.path.join(root, 'utils', 'console', 'ui.py'), environments.port], env = environment)
+        options = [environments.port]
+        if environments.debug:
+            options.append('debug')
+        process = subprocess.Popen([sys.executable, os.path.join(root, 'utils', 'console', 'ui.py')] + options, env = environment)
         process.wait()
 
 except SystemExit:
