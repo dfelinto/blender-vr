@@ -83,7 +83,8 @@ class daemon(base.single):
         if self._environments is None:
             self._environments = {}
 
-class log(base.alone):
+
+class log(base.mono):
     def __init__(self, parent, name, attrs):
         super(log, self).__init__(parent, name, attrs)
         self._attribute_list += ['clear_previous', 'path']
@@ -106,7 +107,7 @@ class log(base.alone):
             self._path = os.path.join(os.path.expanduser('~'), '.log', 'blender')
 
 
-class login(base.alone):
+class login(base.mono):
     def __init__(self, parent, name, attrs):
         super(login, self).__init__(parent, name, attrs)
         self._attribute_list += ['remote_command', 'python']
@@ -162,3 +163,4 @@ class XML(common_system.XML):
         super(XML, self)._default()
         if self._root is None:
             self._root = blenderVR_root
+
