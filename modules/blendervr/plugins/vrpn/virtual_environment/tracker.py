@@ -44,6 +44,10 @@ from ....player import device, exceptions
 class _Sensor(device.Sender):
     def __init__(self, parent, configuration):
         super(_Sensor, self).__init__(parent, configuration)
+
+        if not self.isAvailable():
+            return
+
         self._id = configuration['id']
         for when in ['pre', 'post']:
             result = mathutils.Matrix()

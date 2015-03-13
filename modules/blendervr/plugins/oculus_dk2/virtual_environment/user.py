@@ -45,12 +45,10 @@ class User(device.Sender):
         _configuration['users'] = _configuration['viewer']
 
         super(User, self).__init__(parent, _configuration)
-        self._available = False
 
-        if self.blenderVR.getComputerName() != _configuration['computer']:
+        if not self.isAvailable():
             return
 
-        self._available = True
         self._viewer = self.blenderVR.getUserByName(configuration['viewer'])
 
 
@@ -65,6 +63,3 @@ class User(device.Sender):
 
     def getUser(self):
         return self._viewer
-
-    def isAvailable(self):
-        return self._available
