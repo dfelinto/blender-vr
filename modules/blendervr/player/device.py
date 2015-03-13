@@ -71,8 +71,13 @@ class Sender(Base):
         self._available = False
         self._processor_method_name = configuration['processor_method']
 
-        if self.blenderVR.getComputerName() != configuration['computer']:
-            return
+        self.logger.debug('Sender', self.blenderVR.getComputerName(), configuration)
+
+        try:
+            if self.blenderVR.getComputerName() != configuration['computer']:
+                return
+        except Exception as err:
+            self.logger.error(err)
 
         self._data = configuration.get('data')
         self._users = []
