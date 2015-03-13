@@ -70,8 +70,4 @@ class User(xml.mono):
 
         self._viewer = attrs.get('viewer')
         self._host = attrs.get('host', '127.0.0.1')
-
-        if 'processor_method' not in attrs:
-            self._processor_method = 'user_position'
-        else:
-            self._processor_method = attrs.get('processor_method')
+        self._processor_method = attrs.get('processor_method', 'user_position')

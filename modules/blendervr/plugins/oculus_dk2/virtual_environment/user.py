@@ -55,7 +55,7 @@ class User(device.Sender):
 
         # TODO, check if host is a valid one
 
-    def run(self, info):
+    def run(self):
         try:
             self._updateMatrix()
             info = {'matrix' : self._matrix}

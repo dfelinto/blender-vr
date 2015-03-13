@@ -94,4 +94,9 @@ class OculusDK2(base.Base):
             self.logger.info('Oculus DK2 python module not available ! No valid user found.')
             return False
 
+        for device in self._devices:
+            if not device.checkMethod(True):
+                self.logger.info('No Oculus DK2 processor method available for user {0}!'.format(device.getName()))
+                del device
+
         return True
