@@ -53,7 +53,7 @@ class Sender(xml.XML):
 
     def __init__(self, parent, name, attrs):
         super(Sender, self).__init__(parent, name, attrs)
-        self._attribute_list += ['processor_method', 'users', 'data', 'computer']
+        self._attribute_list += ['processor_method', 'users', 'data']
 
         if 'processor_method' not in attrs:
             self.raise_error('VRPN sender requires a process method !')
@@ -68,8 +68,3 @@ class Sender(xml.XML):
             self._data = attrs['data']
         else:
             self._data = None
-
-        if 'computer' in attrs:
-            self._computer = attrs['computer']
-        else:
-            self._computer = None

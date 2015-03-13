@@ -71,9 +71,7 @@ class VRPN(base.Base):
                 if (key in configuration) and configuration[key] is not None:
                     for element in configuration[key]:
                         try:
-                            device = className(self, element)
-                            if device.isAvailable():
-                                self._devices.append(device)
+                            self._devices.append(className(self, element))
                         except exceptions.Processor_Invalid_Device_Method \
                                                                 as method:
                             if self._display_processors:

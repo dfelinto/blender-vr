@@ -44,9 +44,6 @@ class Analog(device.Receiver, device.Sender):
     def __init__(self, parent, configuration):
         super(Analog, self).__init__(parent, configuration)
 
-        if not self.isAvailable():
-            return
-
     def start(self):
         self._connexion = vrpn.receiver.Analog(self._name + "@" + self._host)
         self._connexion.register_change_handler(None, self._handler)

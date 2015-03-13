@@ -67,16 +67,12 @@ class Sender(Base):
 
     def __init__(self, main, configuration):
         super(Sender, self).__init__(main, configuration)
-
-        self._available = False
         self._processor_method_name = configuration['processor_method']
-
-        if self.blenderVR.getComputerName() != configuration['computer']:
-            return
-
-        self._data = configuration.get('data')
+        try:
+            self._data = configuration['data']
+        except KeyError:
+            self._data = None
         self._users = []
-
         if 'users' in configuration and configuration['users'] is not None:
             try:
                 self._users.append(self.blenderVR.getUserByName(
@@ -88,9 +84,6 @@ class Sender(Base):
                                     + '": ' + configuration['users'])
         else:
             self._users = list(self.blenderVR.getAllUsers().values())
-
-        self._available = True
-
 
     def checkMethod(self, display_missing):
         processor = self.blenderVR.getProcessor()
@@ -111,6 +104,3 @@ class Sender(Base):
         info['data'] = self._data
         info['self'] = self
         self._processor_method(info)
-
-    def isAvailable(self):
-        return self._available
