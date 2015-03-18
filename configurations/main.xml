@@ -59,26 +59,29 @@
   </screens>
 
   <plugins>
+
     <vrpn>
       <floor x='0.0'/>
       <tracker device="GTK" host="localhost">
-  <transformation>
-    <post_translation z="-1.6"/>
-    <post_rotation x="1.0" y="1.0" z="1.0" angle="`-2*math.pi/3`"/>
-    <pre_rotation x="1.0" y="1.0" z="1.0" angle="`2*math.pi/3`"/>
-  </transformation>
-  <sensor id="0" processor_method='tracker_1'/>
-  <sensor id="1" processor_method='tracker_3'/>
-  <sensor id="2" processor_method='user_position' users='user A'/>
-  <sensor id="3" processor_method='tracker_2'/>
+        <transformation>
+          <post_translation z="-1.6"/>
+          <post_rotation x="1.0" y="1.0" z="1.0" angle="`-2*math.pi/3`"/>
+          <pre_rotation x="1.0" y="1.0" z="1.0" angle="`2*math.pi/3`"/>
+        </transformation>
+        <sensor id="0" processor_method='tracker_1'/>
+        <sensor id="1" processor_method='tracker_3'/>
+        <sensor id="2" processor_method='user_position' users='user A'/>
+        <sensor id="3" processor_method='tracker_2'/>
       </tracker>
       <analog device="GTK" host="localhost" processor_method="movements"/>
       <button device="GTK" host="localhost" processor_method="buttons"/>
     </vrpn>
+
     <osc host='194.57.41.131' port='3819' configuration='ambisonic EVE'>
       <user listener='binaural 1' viewer='user A' />
       <user listener='Ambisonic' />
       <room warmth='32' />
     </osc>
+
   </plugins>
 </blenderVR>

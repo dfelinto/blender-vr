@@ -13,6 +13,7 @@
   </users>
 
   <computers>
+
     <system>
       <!-- <blenderplayer executable='path to blenderplayer executable'/> -->
     </system>
@@ -21,9 +22,11 @@
         <library path="$INSTALL_DIR/venv/lib/python3.4/site-packages" />
         <library path="$INSTALL_DIR/venv/lib/python3.4/site-packages/websocket_client-0.26.0-py3.4.egg-info" />
     </computer>
+
   </computers>
 
   <screens>
+
     <screen name="console" computer="Any">
       <display options="-w 720 450 720 450">
         <environment>DISPLAY=:0</environment>
