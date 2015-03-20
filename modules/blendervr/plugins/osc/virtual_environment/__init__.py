@@ -145,8 +145,8 @@ class OSC(bc_base.Base):
 
         :param obj: OSC_Object
         :type obj: OSC_Object
-        :param obj: OSC_User
-        :type obj: OSC_User
+        :param usr: OSC_User
+        :type usr: OSC_User
         """
         if (not isinstance(obj, object.Object)) or (not isinstance(usr, user.User)):
             raise exceptions.OSC_Invalid_Type('getObjectUser waits a user then an object')
