@@ -139,6 +139,12 @@ class OSC(bc_base.Base):
                 return self._viewers[id_usr]
         return None
 
+    def getUsersDict(self):
+        """
+        Return a dict of items ('<listener name>', osc user)
+        """
+        return self._users
+
     def getObjectUser(self, obj, usr):
         """
         Instantiate OSC_ObjectUser, the 'audio link' between OSC_User and OSC_Object
