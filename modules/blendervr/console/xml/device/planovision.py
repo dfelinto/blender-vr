@@ -37,4 +37,4 @@ from . import screen
 class Device(screen.Screen):
 
     def __init__(self, parent, name, attrs):
-        super(Device, self).__init__(parent, name, attrs)
+        super(Device, self).__init__(parent, name, attrs, True)

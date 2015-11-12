@@ -1,7 +1,9 @@
-## Copyright (C) LIMSI-CNRS (2014)
+# -*- coding: utf-8 -*-
+# file: blendervr/player/screen/monitor.py
+
+## Copyright (C) LIMSI-CNRS (2015)
 ##
-## contributor(s) : Jorge Gascon, Damien Touraine, David Poirier-Quinot,
-## Laurent Pointal, Julian Adenauer,
+## contributor(s) : BlenderVR Development Team
 ##
 ## This software is a computer program whose purpose is to distribute
 ## blender to render on Virtual Reality device systems.
@@ -33,19 +35,21 @@
 ## knowledge of the CeCILL license and that you accept its terms.
 ##
 
-from .. import base
+import mathutils
+import bge
+from . import base
+
+from mathutils import Matrix
+
+""" @package screen
+Monitor user view (don't change the projection matrix, only the modelview matrix)
+"""
 
 class Device(base.Base):
 
-    def __init__(self, parent, name, attrs):
-        super(Device, self).__init__(parent, name, attrs)
+    def __init__(self, parent, configuration):
+        super(Device, self).__init__(parent, configuration)
 
-
-    def _getChildren(self, name, attrs):
-        if name in {'left', 'mono', 'right'}:
-            from .. import screen
-            display = screen.Screen(self, name, attrs, True)
-            setattr(self, '_' + name, display)
-            self._class_list += [name]
-            return display
-
+    def _updateMatrixForBuffer(self, bufferName, camera, depth):
+        user = self._buffers[bufferName]['user']
+        self._setModelViewMatrix(user.getVehiclePosition() * camera.modelview_matrix)

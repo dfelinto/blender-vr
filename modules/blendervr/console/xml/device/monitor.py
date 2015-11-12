@@ -1,7 +1,6 @@
-## Copyright (C) LIMSI-CNRS (2014)
+## Copyright (C) LIMSI-CNRS (2015)
 ##
-## contributor(s) : Jorge Gascon, Damien Touraine, David Poirier-Quinot,
-## Laurent Pointal, Julian Adenauer,
+## contributor(s) : BlenderVR Development Team
 ##
 ## This software is a computer program whose purpose is to distribute
 ## blender to render on Virtual Reality device systems.
@@ -33,19 +32,9 @@
 ## knowledge of the CeCILL license and that you accept its terms.
 ##
 
-from .. import base
+from . import screen
 
-class Device(base.Base):
+class Device(screen.Screen):
 
     def __init__(self, parent, name, attrs):
-        super(Device, self).__init__(parent, name, attrs)
-
-
-    def _getChildren(self, name, attrs):
-        if name in {'left', 'mono', 'right'}:
-            from .. import screen
-            display = screen.Screen(self, name, attrs, True)
-            setattr(self, '_' + name, display)
-            self._class_list += [name]
-            return display
-
+        super(Device, self).__init__(parent, name, attrs, False)
