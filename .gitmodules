@@ -1,3 +1,6 @@
 [submodule "libs/python-ovrsdk"]
 	path = libs/python-ovrsdk
 	url = https://github.com/BlenderVR/python-ovrsdk.git
+[submodule "libs/hmd_sdk_bridge"]
+	path = libs/hmd_sdk_bridge
+	url = https://github.com/dfelinto/hmd_sdk_bridge_build
