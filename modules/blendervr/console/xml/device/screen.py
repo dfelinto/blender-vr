@@ -37,14 +37,23 @@ from . import base
 
 class Screen(base.Base):
 
-    def __init__(self, parent, name, attrs):
+    def __init__(self, parent, name, attrs, define_corners):
         super(Screen, self).__init__(parent, name, attrs)
-        self._attribute_list += ['corners']
+
         self._corners        = None
         self._corner_name    = None
+        self._define_corners = define_corners
+
+        if define_corners:
+            self._attribute_list += ['corners']
+
+        self._name = name
 
     def _getChildren(self, name, attrs):
         if name == 'corner':
+            if not self._define_corners:
+                self.raise_error('Screen type \"{0}\" takes no corner element !'.format(self._name))
+
             if self._corner_name is not None:
                 self.raise_error('Cannot import corner inside corner !')
 
