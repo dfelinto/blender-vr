@@ -50,7 +50,7 @@ class User(device.Sender):
 
         self._viewer = self.BlenderVR.getUserByName(configuration['viewer'])
 
-        self._runtime = configuration['runtime']
+        self._backend = configuration['backend']
 
         self._available = True
 
@@ -67,8 +67,8 @@ class User(device.Sender):
     def getUser(self):
         return self._viewer
 
-    def getRuntime(self):
-        return self._runtime
+    def getBackend(self):
+        return self._backend
 
     def isAvailable(self):
         return self._available

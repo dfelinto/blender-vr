@@ -58,16 +58,25 @@ class Device(base.Device):
 
         import sys
 
-        self._plugin = self.BlenderVR.getPlugin('hmd_bridge_sdk')
+        self._plugin = self.BlenderVR.getPlugin('oculus')
+
         if self._plugin is None:
             self.logger.error("Oculus plugin (hmd_bridge_sdk) not setup in the configuration file, HMD device won't work")
             return
 
         try:
-            """
-            need to initialize the buffer, get the dimensions from the hmd, ...
-            """
-            pass
+            self._plugin.startOculus()
 
         except Exception as err:
             self.logger.error(err)
+
+    def _run(self):
+        if not self._plugin:
+            return
+
+        try:
+            self._plugin.loopOculus()
+
+        except:
+            self.BlenderVR.stopDueToError()
+

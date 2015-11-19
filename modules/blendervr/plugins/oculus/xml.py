@@ -63,7 +63,7 @@ class XML(xml.XML):
 class User(xml.mono):
     def __init__(self, parent, name, attrs):
         super(User, self).__init__(parent, name, attrs)
-        self._attribute_list += ['viewer', 'processor_method', 'computer', 'runtime']
+        self._attribute_list += ['viewer', 'processor_method', 'computer', 'backend']
 
         if 'viewer' not in attrs or \
            'computer' not in attrs:
@@ -72,7 +72,7 @@ class User(xml.mono):
         self._viewer = attrs.get('viewer')
         self._computer = attrs.get('computer')
         self._processor_method = attrs.get('processor_method', 'user_position')
-        self._runtime = attrs.get('runtime', 'latest')
+        self._backend = attrs.get('backend', 'oculus_latest')
 
-        if self._runtime not in {'latest','legacy'}:
-            self.raise_error('Oculus User runtime \"{0}\" not in {\"latest\", \"legacy\"}'.format(self._runtime))
+        if self._backend not in {'oculus_latest','oculus_legacy'}:
+            self.raise_error('Oculus User backend \"{0}\" not in {\"oculus_latest\", \"oculus_legacy\"}'.format(self._backend))
