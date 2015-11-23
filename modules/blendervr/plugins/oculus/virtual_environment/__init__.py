@@ -288,8 +288,8 @@ class HMD_Base:
 
         try:
             for i in range(2):
-                self._offscreen[i] = render.offScreenCreate(self._width[i], self._height[i], 0)
-                self._color_texture[i] = self._offscreen[i].color_texture
+                self._offscreen[i] = render.offScreenCreate(self._width[i], self._height[i], 0, render.RAS_OFS_RENDER_TEXTURE)
+                self._color_texture[i] = self._offscreen[i].color
 
         except Exception as E:
             self.error('init', E, True)
