@@ -76,7 +76,19 @@ class Oculus(base.Base):
                     self.logger.log_traceback(False)
 
         self._backend = self._user.getBackend()
+        self._mirror = False #TODO
         self._available = True
+
+    def __del__(self):
+        if self._hmd:
+            self._hmd.quit()
+
+    @property
+    def use_mirror(self):
+        return self._mirror and self._hmd and self._hmd.is_direct_mode
+
+    def reCenter(self):
+        return self._hmd and self._hmd.reCenter()
 
     def start(self):
         super(Oculus, self).start()
@@ -122,7 +134,7 @@ class Oculus(base.Base):
     def _getHMDClass(self):
         backend = self._user.getBackend()
 
-        if backend == 'oculus_latest':
+        if backend == 'oculus':
             return BridgeOculus
 
         elif backend == 'oculus_legacy':
@@ -144,18 +156,12 @@ class Oculus(base.Base):
 
         try:
             scene = logic.getCurrentScene()
-
             self._hmd = self._getHMDClass()(scene, self.logger.error)
 
             if not self._hmd.init():
                 self.logger.error("Error initializing device")
+                self._hmd = None
                 return False
-
-            # get the data from device
-            color_texture = [0, 0]
-            for i in range(2):
-                self._hmd.setEye(i)
-                color_texture[i] = self._hmd.color_texture
 
         except Exception as E:
             self.logger.log_traceback(E)
@@ -163,16 +169,26 @@ class Oculus(base.Base):
             return False
 
         else:
+            if self.use_mirror:
+                if self._drawMirror not in scene.post_draw:
+                    scene.post_draw.append(self._drawMirror)
+
+                logic.setRender(True)
+            else:
+                logic.setRender(False)
+
             return True
 
     def loopOculus(self):
-        from bge import texture
-        from bge import logic
+        from bge import logic, texture
+
+        if not self._hmd:
+            return
 
         self._hmd.loop()
 
         scene = logic.getCurrentScene()
-        camera = scene.active_camera
+        camera = scene.objects.get('Camera.VR')
 
         for i in range(2):
             self._hmd.setEye(i)
@@ -184,9 +200,7 @@ class Oculus(base.Base):
             self._setMatrices(camera, projection_matrix, modelview_matrix)
 
             # drawing
-            ir = texture.ImageRender(scene, camera, offscreen)
-            ir.render()
-            ir.refresh()
+            self._hmd.image_render.refresh(self._hmd.texture_buffer)
 
         self._hmd.frameReady()
 
@@ -196,6 +210,15 @@ class Oculus(base.Base):
         modelview_matrix.invert()
         camera.worldPosition = modelview_matrix.translation
         camera.worldOrientation = modelview_matrix.to_quaternion()
+
+    def _drawMirror(self):
+        # TODO
+        pass
+        """
+        texture_a = self._hmd._color_texture[0]
+        texture_b = self._hmd._color_texture[1]
+        drawPreview(texture_a, texture_b)
+        """
 
 
 # #####################################
@@ -215,6 +238,8 @@ class HMD_Base:
         "_is_direct_mode",
         "_eye_pose",
         "_offscreen",
+        "_texture_buffer",
+        "_image_render",
         "_color_texture",
         "_modelview_matrix",
         "_near",
@@ -232,6 +257,8 @@ class HMD_Base:
         self._modelview_matrix = [Matrix.Identity(4), Matrix.Identity(4)]
         self._color_texture = [0, 0]
         self._offscreen = [None, None]
+        self._texture_buffer = [None, None]
+        self._image_render = [None, None]
         self._eye_orientation_raw = [[1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]]
         self._eye_position_raw = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
         self._scale = self._calculateScale()
@@ -263,6 +290,14 @@ class HMD_Base:
         return self._offscreen[self._current_eye]
 
     @property
+    def texture_buffer(self):
+        return self._texture_buffer[self._current_eye]
+
+    @property
+    def image_render(self):
+        return self._image_render[self._current_eye]
+
+    @property
     def color_texture(self):
         return self._color_texture[self._current_eye]
 
@@ -284,17 +319,36 @@ class HMD_Base:
         :return: return True if the device was properly initialized
         :rtype: bool
         """
-        from bge import render
+        from bge import logic, render, texture
 
         try:
+            scene = logic.getCurrentScene()
+            camera = scene.objects.get('Camera.VR')
+
+            if not camera:
+                raise Exception('Camera.VR not found in scene')
+
             for i in range(2):
-                self._offscreen[i] = render.offScreenCreate(self._width[i], self._height[i], 0, render.RAS_OFS_RENDER_TEXTURE)
-                self._color_texture[i] = self._offscreen[i].color
+                offscreen = render.offScreenCreate(self._width[i], self._height[i], 0, render.RAS_OFS_RENDER_TEXTURE)
+                image_render = texture.ImageRender(scene, camera, offscreen)
+                image_render.alpha = True
+                self._offscreen[i] = offscreen
+
+                self._image_render[i] = image_render
+                self._color_texture[i] = offscreen.color
+                self._texture_buffer[i] = bytearray(offscreen.width * offscreen.height * 4)
+
+                print(self._width[i], self._height[i], self._offscreen[i].color)
 
         except Exception as E:
             self.error('init', E, True)
-            self._offscreen[0] = None
-            self._offscreen[1] = None
+
+            for i in range(2):
+                self._offscreen[i] = None
+                self._image_render[i] = None
+                self._color_texture[i] = 0
+                self._texture_buffer[i] = None
+
             return False
 
         else:
@@ -338,7 +392,7 @@ class HMD_Base:
         Handle error messages
         """
         if VERBOSE:
-            print("ADD-ON :: {0}() : {1}".format(function, exception))
+            print("HMD_SDK_BRIDGE :: {0}() : {1}".format(function, exception))
             import sys
             traceback = sys.exc_info()
 
