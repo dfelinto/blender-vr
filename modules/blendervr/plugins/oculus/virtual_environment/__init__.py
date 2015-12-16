@@ -102,6 +102,84 @@ class Oculus(base.Base):
     def run(self):
         pass
 
+    def startOculus(self):
+        from bge import logic
+
+        try:
+            scene = logic.getCurrentScene()
+            self._hmd = self._getHMDClass()(scene, self.logger.error)
+
+            if not self._hmd.init():
+                self.logger.error("Error initializing device")
+                self._hmd = None
+                return False
+
+        except Exception as E:
+            self.logger.log_traceback(E)
+            self._hmd = None
+            return False
+
+        else:
+            self._setupGame()
+            self._setupMirror(scene)
+            return True
+
+    def loopOculus(self):
+        from bge import logic, texture
+
+        if not self._hmd:
+            return
+
+        self._hmd.loop()
+
+        scene = logic.getCurrentScene()
+        camera = scene.objects.get('Camera.VR')
+
+        for i in range(2):
+            self._hmd.setEye(i)
+
+            offscreen = self._hmd.offscreen
+            projection_matrix = self._hmd.projection_matrix
+            modelview_matrix = self._hmd.modelview_matrix
+
+            self._setMatrices(camera, projection_matrix, modelview_matrix)
+
+            # drawing
+            self._hmd.image_render.refresh(self._hmd.texture_buffer)
+
+        self._hmd.frameReady()
+
+    def _setupGame(self):
+        """
+        general game settings
+        """
+        from bge import logic
+
+        # required when logic takes most of the time
+        logic.setMaxLogicFrame(1)
+
+        # make sure we use the correct frame rate
+        logic.setLogicTicRate(75)
+
+        # redundant call since the SDK should also handle this
+        render.setVsync(False)
+
+    def _setupMirror(self, scene):
+        from bge import logic
+
+        if self.use_mirror:
+            if self._drawMirror not in scene.post_draw:
+                scene.post_draw.append(self._drawMirror)
+
+            logic.setRender(True)
+        else:
+            logic.setRender(False)
+
+    def _drawMirror(self):
+        texture_a = self._hmd._color_texture[0]
+        texture_b = self._hmd._color_texture[1]
+        drawPreview(texture_a, texture_b)
+
     def checkMethods(self):
         if not self._available:
             self.logger.info('Oculus python module not available !')
@@ -151,74 +229,12 @@ class Oculus(base.Base):
         # TODO check is oculus is connected
         return True
 
-    def startOculus(self):
-        from bge import logic
-
-        try:
-            scene = logic.getCurrentScene()
-            self._hmd = self._getHMDClass()(scene, self.logger.error)
-
-            if not self._hmd.init():
-                self.logger.error("Error initializing device")
-                self._hmd = None
-                return False
-
-        except Exception as E:
-            self.logger.log_traceback(E)
-            self._hmd = None
-            return False
-
-        else:
-            if self.use_mirror:
-                if self._drawMirror not in scene.post_draw:
-                    scene.post_draw.append(self._drawMirror)
-
-                logic.setRender(True)
-            else:
-                logic.setRender(False)
-
-            return True
-
-    def loopOculus(self):
-        from bge import logic, texture
-
-        if not self._hmd:
-            return
-
-        self._hmd.loop()
-
-        scene = logic.getCurrentScene()
-        camera = scene.objects.get('Camera.VR')
-
-        for i in range(2):
-            self._hmd.setEye(i)
-
-            offscreen = self._hmd.offscreen
-            projection_matrix = self._hmd.projection_matrix
-            modelview_matrix = self._hmd.modelview_matrix
-
-            self._setMatrices(camera, projection_matrix, modelview_matrix)
-
-            # drawing
-            self._hmd.image_render.refresh(self._hmd.texture_buffer)
-
-        self._hmd.frameReady()
-
     def _setMatrices(self, camera, projection_matrix, modelview_matrix):
         camera.projection_matrix = projection_matrix
 
         modelview_matrix.invert()
         camera.worldPosition = modelview_matrix.translation
         camera.worldOrientation = modelview_matrix.to_quaternion()
-
-    def _drawMirror(self):
-        # TODO
-        pass
-        """
-        texture_a = self._hmd._color_texture[0]
-        texture_b = self._hmd._color_texture[1]
-        drawPreview(texture_a, texture_b)
-        """
 
 
 # #####################################
@@ -238,7 +254,6 @@ class HMD_Base:
         "_is_direct_mode",
         "_eye_pose",
         "_offscreen",
-        "_texture_buffer",
         "_image_render",
         "_color_texture",
         "_modelview_matrix",
@@ -257,7 +272,6 @@ class HMD_Base:
         self._modelview_matrix = [Matrix.Identity(4), Matrix.Identity(4)]
         self._color_texture = [0, 0]
         self._offscreen = [None, None]
-        self._texture_buffer = [None, None]
         self._image_render = [None, None]
         self._eye_orientation_raw = [[1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]]
         self._eye_position_raw = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
@@ -288,10 +302,6 @@ class HMD_Base:
     @property
     def offscreen(self):
         return self._offscreen[self._current_eye]
-
-    @property
-    def texture_buffer(self):
-        return self._texture_buffer[self._current_eye]
 
     @property
     def image_render(self):
@@ -336,7 +346,6 @@ class HMD_Base:
 
                 self._image_render[i] = image_render
                 self._color_texture[i] = offscreen.color
-                self._texture_buffer[i] = bytearray(offscreen.width * offscreen.height * 4)
 
                 print(self._width[i], self._height[i], self._offscreen[i].color)
 
@@ -347,7 +356,6 @@ class HMD_Base:
                 self._offscreen[i] = None
                 self._image_render[i] = None
                 self._color_texture[i] = 0
-                self._texture_buffer[i] = None
 
             return False
 
